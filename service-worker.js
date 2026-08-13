@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fixora-v16';
+const CACHE_NAME = 'fixora-v17';
 const STATIC_ASSETS = [
   './',
   './index.html',

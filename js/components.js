@@ -303,7 +303,9 @@ const Components = {
     const messageElement = loader.querySelector('.app-loader-text');
     if (messageElement) messageElement.textContent = String(message || 'Procesando...');
     document.body.setAttribute('aria-busy', 'true');
-    requestAnimationFrame(() => loader.classList.add('active'));
+    // Make blocking operations visible in the same event that starts them.
+    // Waiting for the next animation frame leaves a short window for repeat clicks.
+    loader.classList.add('active');
     return token;
   },
 
