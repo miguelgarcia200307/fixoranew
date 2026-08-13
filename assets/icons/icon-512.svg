@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FIXORA">
+  <defs>
+    <linearGradient id="g" x1="72" y1="72" x2="440" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <path d="M210 108H126a18 18 0 0 0-18 18v260a18 18 0 0 0 18 18h260a18 18 0 0 0 18-18V238l-80-80H210V108Z" fill="#fff" opacity=".95"/>
+  <path d="M320 108v80a18 18 0 0 0 18 18h80" fill="none" stroke="#6366f1" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M168 288h176M168 338h176" fill="none" stroke="#6366f1" stroke-width="26" stroke-linecap="round"/>
+</svg>

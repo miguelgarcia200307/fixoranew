@@ -1,0 +1,40 @@
+* { box-sizing: border-box; }
+html { min-height: 100%; background: #f2f4fb; }
+body { min-height: 100vh; margin: 0; color: #182033; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+button, input { font: inherit; }
+.sign-page { min-height: 100vh; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.sign-card { width: min(100%, 640px); padding: clamp(20px, 5vw, 36px); border: 1px solid #e1e5ef; border-radius: 24px; background: #fff; box-shadow: 0 18px 50px rgba(30, 39, 72, .10); }
+.sign-brand { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 20px; color: #5557d9; font-weight: 800; letter-spacing: .08em; }
+.sign-brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(135deg, #6667ed, #4143bf); color: #fff; }
+h1 { margin: 0; font-size: clamp(1.55rem, 5vw, 2.15rem); line-height: 1.15; }
+.sign-subtitle { margin: 8px 0 24px; color: #667085; font-size: 1rem; }
+.sign-instruction { margin: 0 0 10px; font-weight: 650; }
+.sign-canvas-shell { position: relative; height: clamp(220px, 42vh, 310px); overflow: hidden; border: 2px dashed #b8bfda; border-radius: 16px; background: #fff; transition: border-color .2s, box-shadow .2s; }
+.sign-canvas-shell:focus-within { border-color: #5b5ce2; box-shadow: 0 0 0 4px rgba(91, 92, 226, .12); }
+#signature-canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.sign-canvas-hint { position: absolute; inset: 50% 0 auto; transform: translateY(-50%); margin: 0; color: #a0a6b8; text-align: center; pointer-events: none; }
+.sign-canvas-shell.has-strokes .sign-canvas-hint { display: none; }
+.sign-tools { display: flex; justify-content: flex-end; margin: 10px 0 18px; }
+.sign-btn { min-height: 48px; padding: 11px 18px; border: 1px solid transparent; border-radius: 12px; font-weight: 750; cursor: pointer; transition: transform .15s, background .15s, border-color .15s; }
+.sign-btn:focus-visible, .sign-check input:focus-visible { outline: 3px solid rgba(91, 92, 226, .32); outline-offset: 2px; }
+.sign-btn:active { transform: scale(.98); }
+.sign-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.sign-btn--secondary { color: #3d4660; border-color: #d7dce8; background: #fff; }
+.sign-btn--secondary:hover { background: #f6f7fb; }
+.sign-btn--primary { width: 100%; color: #fff; background: #5557d9; box-shadow: 0 8px 20px rgba(85, 87, 217, .24); }
+.sign-btn--primary:hover:not(:disabled) { background: #4446c4; }
+.sign-check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; margin: 0 0 18px; color: #4b556d; font-size: .94rem; line-height: 1.45; }
+.sign-check input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: #5557d9; }
+.sign-message { min-height: 22px; margin: 10px 0 0; color: #b42318; font-size: .92rem; text-align: center; }
+.sign-message--info { color: #475467; }
+.sign-state { text-align: center; padding: 18px 0 8px; }
+.sign-state-icon { width: 72px; height: 72px; display: grid; place-items: center; margin: 0 auto 20px; border-radius: 50%; font-size: 34px; font-weight: 800; }
+.sign-state--success .sign-state-icon { color: #078653; background: #e8f8f0; }
+.sign-state--error .sign-state-icon { color: #b42318; background: #fef0ee; }
+.sign-state p { color: #667085; line-height: 1.6; }
+.sign-loading { display: grid; justify-items: center; gap: 12px; padding: 60px 0; color: #667085; }
+.sign-spinner { width: 36px; height: 36px; border: 3px solid #e5e7ef; border-top-color: #5557d9; border-radius: 50%; animation: spin .75s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 480px) { .sign-page { align-items: start; padding-left: 10px; padding-right: 10px; } .sign-card { border-radius: 18px; } .sign-canvas-shell { height: 260px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+

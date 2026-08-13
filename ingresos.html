@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6366f1">
+  <title>FIXORA - Ingresos</title>
+  <link rel="icon" type="image/png" href="img/logologin.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="img/logo.png" alt="FIXORA">
+        </div>
+      </div>
+      <nav class="sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <button class="btn btn-ghost btn-block" onclick="Auth.signOut()" style="justify-content:flex-start;gap:var(--space-3)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span class="sidebar-footer-text">Cerrar sesión</span>
+        </button>
+      </div>
+      <button class="sidebar-toggle" id="sidebar-toggle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <main class="main-content">
+      <header class="navbar">
+        <div class="navbar-left">
+          <button class="mobile-menu-btn" id="mobile-menu-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-item">Dashboard</a>
+            <svg class="breadcrumb-separator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <span class="breadcrumb-item active">Ingresos</span>
+          </div>
+        </div>
+        <div class="navbar-right">
+          <button class="theme-toggle" onclick="App.toggleTheme()" data-tooltip="Cambiar tema">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="page-content page-enter">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Ingreso de equipos</h2>
+            <p class="page-subtitle" id="income-count">0 ingresos</p>
+          </div>
+          <button class="btn btn-primary" id="btn-new-income">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo ingreso
+          </button>
+        </div>
+
+        <div class="dashboard-stats mb-6" id="income-stats">
+          <div class="stat-card"><div class="skeleton skeleton-card"></div></div>
+          <div class="stat-card"><div class="skeleton skeleton-card"></div></div>
+          <div class="stat-card"><div class="skeleton skeleton-card"></div></div>
+          <div class="stat-card"><div class="skeleton skeleton-card"></div></div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="income-toolbar">
+            <div class="search-bar income-toolbar-search">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="form-input" id="income-search" placeholder="Buscar por código, cliente, teléfono, tipo, marca, modelo, serial o IMEI">
+            </div>
+            <select class="form-select" id="income-device-filter">
+              <option value="all">Todos los dispositivos</option>
+              <option value="desktop">Computador</option>
+              <option value="laptop">Portátil</option>
+              <option value="phone">Celular</option>
+              <option value="tablet">Tablet</option>
+              <option value="smartwatch">Smartwatch</option>
+              <option value="console">Consola</option>
+              <option value="printer">Impresora</option>
+              <option value="monitor">Monitor</option>
+              <option value="other">Otro</option>
+            </select>
+            <select class="form-select" id="income-status-filter">
+              <option value="all">Todos los estados</option>
+              <option value="received">Recibido</option>
+              <option value="in_review">En revisión</option>
+              <option value="repairing">En reparación</option>
+              <option value="ready">Listo</option>
+              <option value="delivered">Entregado</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="income-list">
+          <div class="skeleton skeleton-card" style="height:260px"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="global-search-overlay" id="global-search-overlay">
+    <div class="global-search-modal">
+      <div class="global-search-input-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="global-search-input" placeholder="Buscar documentos, clientes e ingresos..." autofocus>
+        <kbd class="global-search-shortcut">ESC</kbd>
+      </div>
+      <div class="global-search-results"></div>
+      <div class="global-search-footer">
+        <span><kbd class="global-search-shortcut">↑↓</kbd> Navegar</span>
+        <span><kbd class="global-search-shortcut">Enter</kbd> Seleccionar</span>
+        <span><kbd class="global-search-shortcut">ESC</kbd> Cerrar</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app-config.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="vendor/qrcode/qrcode.js"></script>
+  <script src="js/signatures.js"></script>
+  <script src="vendor/html2pdf/html2pdf.bundle.min.js"></script>
+  <script src="js/pdf.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/ingresos.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!await Auth.guard()) return;
+      App.init();
+      App.setupSidebar();
+      GlobalSearch.init();
+      Ingresos.init();
+    });
+  </script>
+</body>
+</html>

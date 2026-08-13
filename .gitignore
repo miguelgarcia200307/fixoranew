@@ -1,0 +1,32 @@
+# Dependencies and generated output
+node_modules/
+coverage/
+dist/
+build/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Supabase CLI local state (may contain connection metadata)
+supabase/.temp/
+supabase/.branches/
+
+# Temporary exports, browser profiles and caches
+tmp/
+*.tmp
+*.log
+npm-debug.log*
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+

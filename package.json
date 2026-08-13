@@ -1,0 +1,24 @@
+{
+  "name": "fixora-new",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema profesional de **Facturación y Cotizaciones** para negocios de servicio técnico y cualquier tipo de negocio.",
+  "main": "service-worker.js",
+  "scripts": {
+    "dev": "npx serve . -l 5500 --no-port-switching --no-clipboard",
+    "start": "npx serve . -l 5500 --no-port-switching --no-clipboard",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "dependencies": {
+    "html2pdf.js": "^0.14.0",
+    "qrcode-generator": "^1.4.4"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.110.7",
+    "vitest": "^3.2.4"
+  }
+}

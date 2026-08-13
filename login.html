@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>FIXORA - Iniciar Sesión</title>
+  <link rel="icon" type="image/png" href="img/logologin.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-container animate-fade-in-up">
+      <div class="login-card">
+        <div class="login-logo">
+          <div class="login-logo-img">
+            <img src="img/logologin.png" alt="Logo de FIXORA">
+          </div>
+          <h1 class="login-title">FIXORA</h1>
+          <p class="login-subtitle">Sistema de Facturación y Cotizaciones</p>
+        </div>
+
+        <div class="login-tabs">
+          <button class="login-tab active" data-tab="login">Iniciar Sesión</button>
+          <button class="login-tab" data-tab="register">Registrarse</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="login-form">
+          <div class="form-group">
+            <label class="form-label">Correo electrónico</label>
+            <div class="form-input-icon">
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" class="form-input" id="login-email" placeholder="tu@correo.com" required autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <div class="form-input-icon">
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" class="form-input" id="login-password" placeholder="Tu contraseña" required autocomplete="current-password">
+              <button type="button" class="password-toggle" id="login-password-toggle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="login-actions">
+            <label class="form-checkbox">
+              <input type="checkbox" id="remember-me" checked>
+              <span class="text-sm">Recordarme</span>
+            </label>
+            <button type="button" class="login-link" id="forgot-password-link">¿Olvidaste tu contraseña?</button>
+          </div>
+          <div id="login-error" class="alert alert-danger" style="display:none"></div>
+          <button type="submit" class="btn btn-primary btn-lg btn-block" id="login-submit">
+            <span class="btn-text">Iniciar Sesión</span>
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" class="login-form" style="display:none">
+          <div class="form-group">
+            <label class="form-label form-label-required">Nombre del negocio</label>
+            <input type="text" class="form-input" id="register-business" placeholder="Mi Negocio" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label form-label-required">Correo electrónico</label>
+            <input type="email" class="form-input" id="register-email" placeholder="tu@correo.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label form-label-required">Contraseña</label>
+            <div class="form-input-icon">
+              <input type="password" class="form-input" id="register-password" placeholder="Mínimo 6 caracteres" required minlength="6">
+              <button type="button" class="password-toggle" id="register-password-toggle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="form-help" id="password-strength"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label form-label-required">Confirmar contraseña</label>
+            <input type="password" class="form-input" id="register-confirm" placeholder="Repite tu contraseña" required>
+          </div>
+          <div id="register-error" class="alert alert-danger" style="display:none"></div>
+          <div id="register-success" class="alert alert-success" style="display:none"></div>
+          <button type="submit" class="btn btn-primary btn-lg btn-block" id="register-submit">
+            <span class="btn-text">Crear Cuenta</span>
+          </button>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form id="forgot-form" class="login-form" style="display:none">
+          <div style="text-align:center;margin-bottom:var(--space-4)">
+            <p class="text-secondary text-sm">Ingresa tu correo y te enviaremos las instrucciones para restablecer tu contraseña.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-input" id="forgot-email" placeholder="tu@correo.com" required>
+          </div>
+          <div id="forgot-error" class="alert alert-danger" style="display:none"></div>
+          <div id="forgot-success" class="alert alert-success" style="display:none"></div>
+          <button type="submit" class="btn btn-primary btn-lg btn-block">
+            <span class="btn-text">Enviar Instrucciones</span>
+          </button>
+          <button type="button" class="btn btn-ghost btn-block" id="back-to-login">Volver al inicio de sesión</button>
+        </form>
+
+        <div class="login-footer">
+          <p>&copy; 2024 FIXORA. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app-config.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (await Auth.init()) {
+        Auth.redirectTo('dashboard.html');
+        return;
+      }
+
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      const forgotForm = document.getElementById('forgot-form');
+      const tabs = document.querySelectorAll('.login-tab');
+
+      // Tab switching
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const target = tab.dataset.tab;
+          loginForm.style.display = target === 'login' ? 'flex' : 'none';
+          registerForm.style.display = target === 'register' ? 'flex' : 'none';
+          forgotForm.style.display = 'none';
+          document.getElementById('login-error').style.display = 'none';
+          document.getElementById('register-error').style.display = 'none';
+        });
+      });
+
+      // Login
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const errorEl = document.getElementById('login-error');
+        const submitBtn = document.getElementById('login-submit');
+
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+        errorEl.style.display = 'none';
+
+        const { user, error } = await Auth.signIn(email, password);
+
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+
+        if (error) {
+          errorEl.textContent = error;
+          errorEl.style.display = 'flex';
+          return;
+        }
+
+        Auth.redirectTo('dashboard.html');
+      });
+
+      // Register
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const business = document.getElementById('register-business').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirm = document.getElementById('register-confirm').value;
+        const errorEl = document.getElementById('register-error');
+        const successEl = document.getElementById('register-success');
+        const submitBtn = document.getElementById('register-submit');
+
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+
+        if (password !== confirm) {
+          errorEl.textContent = 'Las contraseñas no coinciden';
+          errorEl.style.display = 'flex';
+          return;
+        }
+
+        if (password.length < 6) {
+          errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
+          errorEl.style.display = 'flex';
+          return;
+        }
+
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        const { user, error } = await Auth.signUp(email, password, business);
+
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+
+        if (error) {
+          errorEl.textContent = error;
+          errorEl.style.display = 'flex';
+          return;
+        }
+
+        successEl.textContent = 'Cuenta creada correctamente. Revisa tu correo para verificar tu cuenta.';
+        successEl.style.display = 'flex';
+      });
+
+      // Forgot password
+      document.getElementById('forgot-password-link').addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'none';
+        forgotForm.style.display = 'flex';
+      });
+
+      document.getElementById('back-to-login').addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[0].classList.add('active');
+        loginForm.style.display = 'flex';
+        registerForm.style.display = 'none';
+        forgotForm.style.display = 'none';
+      });
+
+      forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgot-email').value;
+        const errorEl = document.getElementById('forgot-error');
+        const successEl = document.getElementById('forgot-success');
+
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+
+        const { error } = await Auth.resetPassword(email);
+
+        if (error) {
+          errorEl.textContent = error;
+          errorEl.style.display = 'flex';
+          return;
+        }
+
+        successEl.textContent = 'Se enviaron las instrucciones a tu correo.';
+        successEl.style.display = 'flex';
+      });
+
+      // Password toggles
+      document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const input = btn.previousElementSibling;
+          const isPassword = input.type === 'password';
+          input.type = isPassword ? 'text' : 'password';
+          btn.innerHTML = isPassword
+            ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        });
+      });
+
+      // Password strength
+      document.getElementById('register-password')?.addEventListener('input', (e) => {
+        const val = e.target.value;
+        const strengthEl = document.getElementById('password-strength');
+        if (!val) { strengthEl.textContent = ''; return; }
+
+        let strength = 0;
+        if (val.length >= 6) strength++;
+        if (val.length >= 8) strength++;
+        if (/[A-Z]/.test(val)) strength++;
+        if (/[0-9]/.test(val)) strength++;
+        if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+        const labels = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Fuerte', 'Muy fuerte'];
+        const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#10b981', '#10b981', '#10b981'];
+        strengthEl.textContent = `Seguridad: ${labels[strength]}`;
+        strengthEl.style.color = colors[strength];
+      });
+    });
+  </script>
+</body>
+</html>

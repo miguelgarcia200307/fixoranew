@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6366f1">
+  <title>FIXORA - Detalle del Documento</title>
+  <link rel="icon" type="image/png" href="img/logologin.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo"><img src="img/logo.png" alt="FIXORA"></div>
+      </div>
+      <nav class="sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <button class="btn btn-ghost btn-block" onclick="Auth.signOut()" style="justify-content:flex-start;gap:var(--space-3)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span class="sidebar-footer-text">Cerrar Sesión</span>
+        </button>
+      </div>
+      <button class="sidebar-toggle" id="sidebar-toggle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <main class="main-content">
+      <header class="navbar">
+        <div class="navbar-left">
+          <button class="mobile-menu-btn" id="mobile-menu-btn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+          <div class="breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-item">Dashboard</a>
+            <svg class="breadcrumb-separator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <a href="historial.html" class="breadcrumb-item">Historial</a>
+            <svg class="breadcrumb-separator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <span class="breadcrumb-item active" id="breadcrumb-doc">Detalle</span>
+          </div>
+        </div>
+        <div class="navbar-right">
+          <button class="theme-toggle" onclick="App.toggleTheme()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </header>
+      <div class="page-content page-enter">
+        <div id="detail-loading" class="skeleton skeleton-card" style="height:400px"></div>
+        <div id="detail-content" style="display:none">
+          <!-- Header -->
+          <div class="page-header">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <h2 class="page-title" id="detail-number">-</h2>
+                <span class="badge" id="detail-type-badge">-</span>
+                <span class="badge" id="detail-status-badge">-</span>
+              </div>
+              <p class="page-subtitle" id="detail-date">-</p>
+            </div>
+            <div class="flex gap-3">
+              <button class="btn btn-ghost" onclick="history.back()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Volver
+              </button>
+              <div class="dropdown" style="position:relative">
+                <button class="btn btn-secondary" id="detail-actions-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                  Acciones
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Info Cards -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);margin-bottom:var(--space-5)">
+            <div class="card">
+              <h4 class="text-xs text-tertiary font-semibold mb-2" style="text-transform:uppercase;letter-spacing:0.5px">Datos del Negocio</h4>
+              <div id="detail-business"></div>
+            </div>
+            <div class="card">
+              <h4 class="text-xs text-tertiary font-semibold mb-2" style="text-transform:uppercase;letter-spacing:0.5px">Datos del Cliente</h4>
+              <div id="detail-client"></div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="card mb-5">
+            <h4 class="text-xs text-tertiary font-semibold mb-4" style="text-transform:uppercase;letter-spacing:0.5px">Productos y Servicios</h4>
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th style="text-align:center">Cant.</th>
+                    <th style="text-align:right">Precio</th>
+                    <th style="text-align:right">Descuento</th>
+                    <th style="text-align:right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="detail-items"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Totals & Observations -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)">
+            <div class="card" id="detail-observations-card">
+              <h4 class="text-xs text-tertiary font-semibold mb-2" style="text-transform:uppercase;letter-spacing:0.5px">Observaciones</h4>
+              <p class="text-sm text-secondary" id="detail-observations">-</p>
+            </div>
+            <div class="card">
+              <h4 class="text-xs text-tertiary font-semibold mb-3" style="text-transform:uppercase;letter-spacing:0.5px">Resumen</h4>
+              <div id="detail-totals"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app-config.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="vendor/html2pdf/html2pdf.bundle.min.js"></script>
+  <script src="js/pdf.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let currentDoc = null;
+    let docConfig = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!await Auth.guard()) return;
+      App.init(); App.setupSidebar();
+
+      const params = new URLSearchParams(window.location.search);
+      const docId = params.get('id');
+      if (!docId) { window.location.href = 'historial.html'; return; }
+
+      try {
+        const userId = Auth.getUserId();
+        const configs = await supabase.from('business_config').select('*').eq('user_id', userId).limit(1);
+        docConfig = Array.isArray(configs) && configs.length ? configs[0] : {};
+
+        const doc = await supabase.from('documents').select('*').eq('id', docId).single();
+        if (!doc) { Components.toast({ type: 'error', message: 'Documento no encontrado' }); return; }
+
+        currentDoc = doc;
+        renderDetail(doc);
+        setupActions(doc);
+      } catch (e) {
+        console.error(e);
+        Components.toast({ type: 'error', message: 'Error al cargar documento' });
+      }
+    });
+
+    function renderDetail(doc) {
+      document.getElementById('detail-loading').style.display = 'none';
+      document.getElementById('detail-content').style.display = 'block';
+
+      const isInvoice = doc.type === 'invoice';
+      const client = doc.client_data || {};
+      const items = doc.items_data || [];
+
+      document.getElementById('detail-number').textContent = doc.number || '-';
+      document.getElementById('breadcrumb-doc').textContent = doc.number || 'Detalle';
+      document.title = `FIXORA - ${doc.number || 'Detalle'}`;
+
+      const typeBadge = document.getElementById('detail-type-badge');
+      typeBadge.textContent = isInvoice ? 'Factura' : 'Cotización';
+      typeBadge.className = `badge ${isInvoice ? 'badge-primary' : 'badge-info'}`;
+
+      const statusBadge = document.getElementById('detail-status-badge');
+      const statusMap = { draft: 'Borrador', sent: 'Enviado', paid: 'Pagado', cancelled: 'Anulado', pending: 'Pendiente' };
+      statusBadge.textContent = statusMap[doc.status] || doc.status;
+      statusBadge.className = `badge badge-${doc.status === 'paid' ? 'success' : doc.status === 'cancelled' ? 'danger' : doc.status === 'sent' ? 'info' : 'neutral'}`;
+
+      document.getElementById('detail-date').textContent = `Creado el ${Utils.formatDateTime(doc.created_at)}`;
+
+      // Business info
+      const biz = docConfig;
+      document.getElementById('detail-business').innerHTML = `
+        <div class="text-md font-semibold mb-1">${Utils.sanitize(biz.business_name || 'Sin configurar')}</div>
+        ${biz.nit ? `<div class="text-sm text-secondary">NIT: ${Utils.sanitize(biz.nit)}</div>` : ''}
+        ${biz.address ? `<div class="text-sm text-secondary">${Utils.sanitize(biz.address)}</div>` : ''}
+        ${biz.phone ? `<div class="text-sm text-secondary">Tel: ${Utils.sanitize(biz.phone)}</div>` : ''}
+        ${biz.email ? `<div class="text-sm text-secondary">${Utils.sanitize(biz.email)}</div>` : ''}
+      `;
+
+      // Client info
+      document.getElementById('detail-client').innerHTML = `
+        <div class="text-md font-semibold mb-1">${Utils.sanitize((client.name || '') + ' ' + (client.last_name || '')) || 'Sin cliente'}</div>
+        ${client.company ? `<div class="text-sm text-secondary">${Utils.sanitize(client.company)}</div>` : ''}
+        ${client.document || client.nit ? `<div class="text-sm text-secondary">Doc: ${Utils.sanitize(client.document || client.nit)}</div>` : ''}
+        ${client.phone ? `<div class="text-sm text-secondary">Tel: ${Utils.sanitize(client.phone)}</div>` : ''}
+        ${client.email ? `<div class="text-sm text-secondary">${Utils.sanitize(client.email)}</div>` : ''}
+        ${client.address ? `<div class="text-sm text-secondary">${Utils.sanitize(client.address)}</div>` : ''}
+      `;
+
+      // Items
+      document.getElementById('detail-items').innerHTML = items.map((item, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${Utils.sanitize(item.name || '')}</strong>${item.description ? `<br><span class="text-xs text-tertiary">${Utils.sanitize(item.description)}</span>` : ''}</td>
+          <td style="text-align:center">${item.quantity}</td>
+          <td style="text-align:right">${Utils.formatCurrency(item.unit_price, docConfig)}</td>
+          <td style="text-align:right">${Utils.formatCurrency(item.discount || 0, docConfig)}</td>
+          <td style="text-align:right;font-weight:600">${Utils.formatCurrency(item.subtotal || 0, docConfig)}</td>
+        </tr>
+      `).join('');
+
+      // Observations
+      const obsCard = document.getElementById('detail-observations-card');
+      if (doc.observations) {
+        document.getElementById('detail-observations').textContent = doc.observations;
+      } else {
+        obsCard.style.display = 'none';
+      }
+
+      // Totals
+      document.getElementById('detail-totals').innerHTML = `
+        <div class="document-totals-row"><span>Subtotal</span><span>${Utils.formatCurrency(doc.subtotal || 0, docConfig)}</span></div>
+        <div class="document-totals-row"><span>Descuento</span><span>-${Utils.formatCurrency(doc.discount || 0, docConfig)}</span></div>
+        ${doc.apply_iva ? `<div class="document-totals-row"><span>IVA</span><span>${Utils.formatCurrency(doc.iva || 0, docConfig)}</span></div>` : ''}
+        ${doc.apply_retention ? `<div class="document-totals-row"><span>Retención</span><span>-${Utils.formatCurrency(doc.retention || 0, docConfig)}</span></div>` : ''}
+        <div class="document-totals-row total"><span>Total</span><span>${Utils.formatCurrency(doc.total || 0, docConfig)}</span></div>
+      `;
+    }
+
+    function setupActions(doc) {
+      const actionsBtn = document.getElementById('detail-actions-btn');
+      const isInvoice = doc.type === 'invoice';
+      const editPage = isInvoice ? 'factura' : 'cotizacion';
+
+      actionsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Components.dropdown(actionsBtn, [
+          { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', label: 'Editar', onClick: () => window.location.href = `${editPage}.html?edit=${doc.id}` },
+          { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', label: 'Duplicar', onClick: () => window.location.href = `${editPage}.html?edit=${doc.id}` },
+          { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>', label: 'Vista Previa', onClick: () => PDFGenerator.preview(doc.type, doc, client, items, docConfig) },
+          { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>', label: 'Descargar PDF', onClick: () => PDFGenerator.download(doc.type, doc, doc.client_data, doc.items_data, docConfig) },
+          { divider: true },
+          { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>', label: 'Eliminar', danger: true, onClick: async () => {
+            const confirmed = await Components.confirm({ title: 'Eliminar', message: '¿Estás seguro? Esta acción no se puede deshacer.', type: 'danger' });
+            if (confirmed) {
+              await supabase.from('documents').delete().eq('id', doc.id);
+              Components.toast({ type: 'success', message: 'Documento eliminado' });
+              window.location.href = 'historial.html';
+            }
+          }}
+        ]);
+      });
+    }
+  </script>
+</body>
+</html>
