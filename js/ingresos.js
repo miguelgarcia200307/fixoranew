@@ -250,6 +250,7 @@ const Ingresos = {
   wizard: INCOME_EMPTY_WIZARD(),
   wizardModal: null,
   detailModal: null,
+  detailOpening: false,
   config: null,
 
   async init() {
@@ -2117,8 +2118,16 @@ const Ingresos = {
   },
 
   async openDetail(entry) {
-    const fresh = entry?.id ? await this.fetchEntryById(entry.id) : entry;
-    if (!fresh) return;
+    if (!entry || this.detailOpening) return;
+    if (this.detailModal?.overlay?.isConnected) return;
+
+    this.detailModal = null;
+    this.detailOpening = true;
+    const loadingToken = Components.showLoading('Cargando detalles del ingreso...');
+
+    try {
+      const fresh = entry?.id ? await this.fetchEntryById(entry.id) : entry;
+      if (!fresh) throw new Error('No se pudo encontrar el ingreso seleccionado.');
 
     let signatureState = { requests: [], signatures: [] };
     try { signatureState = await SignatureService.list(fresh.id); } catch { /* Keep detail available during transient API failures. */ }
@@ -2147,9 +2156,13 @@ const Ingresos = {
     const accessories = fresh.accessories || [];
     const unlockCode = fresh.unlock_code_hint || '-';
 
-    const detailModal = Components.modal({
+    let detailModal = null;
+    detailModal = Components.modal({
       title: `${fresh.code || 'Ingreso'} · Detalle`,
       size: 'full',
+      onClose: () => {
+        if (this.detailModal === detailModal) this.detailModal = null;
+      },
       content: `
         <div class="income-detail">
           <div class="income-detail-header card">
@@ -2255,6 +2268,8 @@ const Ingresos = {
       ]
     });
 
+    this.detailModal = detailModal;
+
     detailModal.body.querySelectorAll('[data-gallery-photo]').forEach((button) => {
       button.addEventListener('click', () => {
         const photoIndex = Number(button.dataset.galleryPhoto || 0);
@@ -2272,35 +2287,44 @@ const Ingresos = {
       }
     });
 
-      setTimeout(() => {
-        document.getElementById('income-detail-edit')?.addEventListener('click', () => {
-          this.openWizard(fresh, 'edit');
+      detailModal.body.querySelector('#income-detail-edit')?.addEventListener('click', () => {
+        this.openWizard(fresh, 'edit');
+      });
+      detailModal.body.querySelector('#income-detail-new')?.addEventListener('click', () => {
+        this.openWizard();
+      });
+      detailModal.body.querySelector('#income-detail-signature')?.addEventListener('click', (event) => {
+        if (!SignatureService.isEnabled()) return;
+        SignatureManager.open(fresh, event.currentTarget, async (entryId, type) => {
+          const state = await SignatureService.list(entryId);
+          const signed = (state.signatures || []).find((item) => item.signature_type === type && item.is_current);
+          if (signed) {
+            const badge = detailModal.body.querySelector(`#income-signature-status-${type}`);
+            if (badge) { badge.textContent = 'Firmada'; badge.className = 'signature-status signature-status--signed'; }
+          }
+          const updated = await this.fetchEntryById(entryId);
+          const index = this.entries.findIndex((item) => item.id === entryId);
+          if (updated && index >= 0) this.entries[index] = updated;
+          if (PDFGenerator._activeModal && PDFGenerator._currentIncome?.id === entryId) {
+            await PDFGenerator.previewIncome(updated || fresh, this.config || {});
+          }
         });
-        document.getElementById('income-detail-new')?.addEventListener('click', () => {
-          this.openWizard();
-        });
-        document.getElementById('income-detail-signature')?.addEventListener('click', (event) => {
-          if (!SignatureService.isEnabled()) return;
-          SignatureManager.open(fresh, event.currentTarget, async (entryId, type) => {
-            const state = await SignatureService.list(entryId);
-            const signed = (state.signatures || []).find((item) => item.signature_type === type && item.is_current);
-            if (signed) {
-              const badge = detailModal.body.querySelector(`#income-signature-status-${type}`);
-              if (badge) { badge.textContent = 'Firmada'; badge.className = 'signature-status signature-status--signed'; }
-            }
-            const updated = await this.fetchEntryById(entryId);
-            const index = this.entries.findIndex((item) => item.id === entryId);
-            if (updated && index >= 0) this.entries[index] = updated;
-            if (PDFGenerator._activeModal && PDFGenerator._currentIncome?.id === entryId) {
-              await PDFGenerator.previewIncome(updated || fresh, this.config || {});
-            }
-          });
-        });
-        document.getElementById('income-detail-pdf')?.addEventListener('click', () => {
-          PDFGenerator.previewIncome(fresh, this.config || {});
-        });
-      }, 0);
-    },
+      });
+      detailModal.body.querySelector('#income-detail-pdf')?.addEventListener('click', () => {
+        PDFGenerator.previewIncome(fresh, this.config || {});
+      });
+    } catch (error) {
+      console.error('Error opening income detail:', error);
+      Components.toast({
+        type: 'error',
+        title: 'No se pudo abrir el ingreso',
+        message: error.message || 'OcurriÃ³ un error al cargar los detalles.'
+      });
+    } finally {
+      this.detailOpening = false;
+      Components.hideLoading(loadingToken);
+    }
+  },
 
   renderSpecSummary(entry) {
     const specs = entry.specs || {};
