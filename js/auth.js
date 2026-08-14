@@ -2,6 +2,7 @@
 
 const Auth = {
   currentUser: null,
+  accessProfile: null,
   _initPromise: null,
 
   async init() {
@@ -33,6 +34,7 @@ const Auth = {
       this._refreshInterval = null;
     }
     this.currentUser = null;
+    this.accessProfile = null;
     Utils.storage.remove(CONFIG.session.storageKey);
     localStorage.removeItem('fixora_access_token');
     localStorage.removeItem('fixora_refresh_token');
@@ -68,13 +70,6 @@ const Auth = {
       Utils.storage.set(CONFIG.session.storageKey, result.user);
       this.startAutoRefresh();
 
-      await supabase.from('profiles').insert({
-        id: result.user.id,
-        email: result.user.email,
-        business_name: businessName,
-        created_at: new Date().toISOString()
-      });
-
       return { user: result.user, error: null };
     } catch (error) {
       return { user: null, error: error.message };
@@ -90,7 +85,13 @@ const Auth = {
       this.currentUser = result.user;
       Utils.storage.set(CONFIG.session.storageKey, result.user);
       this.startAutoRefresh();
-      return { user: result.user, error: null };
+      const profile = await this.loadAccessProfile();
+      if (!profile || !profile.is_active) {
+        await supabase.signOut();
+        this.clearLocalSession();
+        return { user: null, error: profile ? 'Tu acceso se encuentra inactivo.' : 'Tu usuario no tiene un perfil válido.' };
+      }
+      return { user: result.user, profile, error: null };
     } catch (error) {
       return { user: null, error: error.message };
     } finally {
@@ -128,6 +129,34 @@ const Auth = {
     return user?.id || null;
   },
 
+  async loadAccessProfile(force = false) {
+    if (this.accessProfile && !force) return this.accessProfile;
+    const userId = this.getUserId();
+    if (!userId) return null;
+    try {
+      const profile = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+      if (profile && !Object.prototype.hasOwnProperty.call(profile, 'role')) {
+        // Compatibility path while the technician migration is pending remotely.
+        // Every profile in the legacy schema represents its own administrator.
+        this.accessProfile = {
+          ...profile,
+          role: 'admin',
+          business_owner_id: profile.id,
+          is_active: true,
+          legacy_schema: true
+        };
+        return this.accessProfile;
+      }
+      this.accessProfile = profile;
+      return this.accessProfile;
+    } catch { return null; }
+  },
+
+  async landingPage() {
+    const profile = await this.loadAccessProfile(true);
+    return profile?.role === 'technician' ? 'tecnico.html' : 'dashboard.html';
+  },
+
   isLoggedIn() {
     return !!this.getUser() && !!localStorage.getItem('fixora_access_token');
   },
@@ -144,10 +173,21 @@ const Auth = {
     }
   },
 
-  async guard() {
+  async guard(requiredRole = null) {
     const user = await this.init();
     if (!user) {
       this.redirectTo('login.html');
+      return false;
+    }
+    const profile = await this.loadAccessProfile(true);
+    if (!profile || !profile.is_active) {
+      await supabase.signOut();
+      this.clearLocalSession();
+      this.redirectTo('login.html');
+      return false;
+    }
+    if (requiredRole && profile.role !== requiredRole) {
+      this.redirectTo(profile.role === 'technician' ? 'tecnico.html' : 'dashboard.html');
       return false;
     }
     return true;

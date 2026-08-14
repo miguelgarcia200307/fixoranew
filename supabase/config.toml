@@ -385,6 +385,9 @@ verify_jwt = false
 # gateway permite que las solicitudes OPTIONS de CORS lleguen al manejador.
 verify_jwt = false
 
+[functions.technician-admin]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

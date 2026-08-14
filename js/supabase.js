@@ -106,6 +106,10 @@ class SupabaseClient {
     return new SupabaseQuery(this, table);
   }
 
+  async rpc(functionName, params = {}) {
+    return this.request('POST', `/rest/v1/rpc/${encodeURIComponent(functionName)}`, params, { omitPrefer: true });
+  }
+
   async signUp(email, password, metadata = {}) {
     const result = await this.request('POST', '/auth/v1/signup', {
       email,

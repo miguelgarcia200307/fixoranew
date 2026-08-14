@@ -36,7 +36,7 @@
     (async function() {
       const user = await Auth.init();
       if (user) {
-        Auth.redirectTo('dashboard.html');
+        Auth.redirectTo(await Auth.landingPage());
       } else {
         Auth.redirectTo('login.html');
       }

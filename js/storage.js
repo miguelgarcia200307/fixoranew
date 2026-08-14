@@ -97,7 +97,14 @@ const Storage = {
   async getSignedUrl(bucket, path, expiresIn = 3600) {
     const url = await supabase.createSignedUrl(bucket, path, expiresIn);
     if (!url) return null;
-    return url.startsWith('http') ? url : `${CONFIG.supabase.url}${url.startsWith('/') ? '' : '/'}${url}`;
+    if (url.startsWith('http')) return url;
+    const relative = url.startsWith('/') ? url : `/${url}`;
+    const storagePath = relative.startsWith('/storage/v1/')
+      ? relative
+      : relative.startsWith('/object/')
+        ? `/storage/v1${relative}`
+        : `/storage/v1${relative}`;
+    return `${CONFIG.supabase.url}${storagePath}`;
   },
 
   async getAuthenticatedObjectUrl(bucket, path) {

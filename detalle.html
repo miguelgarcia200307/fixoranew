@@ -139,7 +139,7 @@
     let docConfig = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      if (!await Auth.guard()) return;
+      if (!await Auth.guard('admin')) return;
       App.init(); App.setupSidebar();
 
       const params = new URLSearchParams(window.location.search);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fixora-v17';
+const CACHE_NAME = 'fixora-v21';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,8 @@ const STATIC_ASSETS = [
   './clientes.html',
   './historial.html',
   './ingresos.html',
+  './tecnicos.html',
+  './tecnico.html',
   './firma.html',
   './detalle.html',
   './configuracion.html',
@@ -21,6 +23,7 @@ const STATIC_ASSETS = [
   './css/components.css',
   './css/style.css',
   './css/responsive.css',
+  './css/technicians.css',
   './css/signature-public.css',
   './js/app-config.js',
   './js/config.js',
@@ -35,6 +38,8 @@ const STATIC_ASSETS = [
   './js/clients.js',
   './js/history.js',
   './js/ingresos.js',
+  './js/technicians-admin.js',
+  './js/technician-portal.js',
   './js/signatures.js',
   './js/signature-core.js',
   './js/signature-public.js',

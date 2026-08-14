@@ -99,7 +99,7 @@
   <script src="js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      if (!await Auth.guard()) return;
+      if (!await Auth.guard('admin')) return;
       App.init(); App.setupSidebar(); History.init();
     });
   </script>

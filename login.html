@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#6366f1">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>FIXORA - Iniciar Sesión</title>
   <link rel="icon" type="image/png" href="img/logologin.png">
@@ -132,7 +133,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       if (await Auth.init()) {
-        Auth.redirectTo('dashboard.html');
+        Auth.redirectTo(await Auth.landingPage());
         return;
       }
 
@@ -178,7 +179,7 @@
           return;
         }
 
-        Auth.redirectTo('dashboard.html');
+        Auth.redirectTo(await Auth.landingPage());
       });
 
       // Register

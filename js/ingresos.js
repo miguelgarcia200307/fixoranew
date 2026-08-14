@@ -204,7 +204,8 @@ const INCOME_EMPTY_WIZARD = () => ({
   saving: false,
   progress: 0,
   title: 'Nuevo ingreso',
-  entryId: null
+  entryId: null,
+  technician_id: null
 });
 
 const incomeUtils = {
@@ -252,6 +253,7 @@ const Ingresos = {
   detailModal: null,
   detailOpening: false,
   config: null,
+  technicians: [],
 
   async init() {
     if (!Auth.requireAuth()) return;
@@ -259,11 +261,19 @@ const Ingresos = {
     Dashboard.renderSidebar();
     Dashboard.setupTheme();
     await this.loadConfig();
+    await this.loadTechnicians();
     await this.loadEntries();
     this.render();
     this.setupEventListeners();
     this.setupSearch();
     this.openEntryFromQuery();
+  },
+
+  async loadTechnicians() {
+    try {
+      const result = await supabase.from('technicians').select('id,full_name,specialty,is_active').eq('business_id', Auth.getUserId()).eq('is_active', true).order('full_name');
+      this.technicians = Array.isArray(result) ? result : [];
+    } catch { this.technicians = []; }
   },
 
   async loadConfig() {
@@ -602,6 +612,7 @@ const Ingresos = {
   fillWizardFromEntry(entry) {
     this.wizard.mode = 'edit';
     this.wizard.entryId = entry.id;
+    this.wizard.technician_id = entry.technician_id || null;
     this.wizard.client = entry.client || null;
     this.wizard.device = {
       device_type: entry.device_type || '',
@@ -864,6 +875,14 @@ const Ingresos = {
         <div class="card">
           <h3 class="card-title">Problema y estado de recepción</h3>
           <div class="grid-form mt-4">
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label" for="income-technician">Técnico responsable</label>
+              <select class="form-select" id="income-technician">
+                <option value="">Sin asignar</option>
+                ${this.technicians.map((technician) => `<option value="${technician.id}" ${this.wizard.technician_id === technician.id ? 'selected' : ''}>${Utils.escapeHtml(technician.full_name)} — ${Utils.escapeHtml(technician.specialty)}</option>`).join('')}
+              </select>
+              <div class="form-help">Puedes asignarlo ahora o hacerlo después desde la bandeja de Técnicos.</div>
+            </div>
             <div class="form-group" style="grid-column:1/-1">
               <label class="form-label form-label-required">¿Por qué ingresa el equipo?</label>
               <textarea class="form-input" id="income-problem" rows="4" placeholder="Describe exactamente lo que manifiesta el cliente.">${Utils.escapeHtml(device.problem_reported || '')}</textarea>
@@ -1583,6 +1602,7 @@ const Ingresos = {
     }
 
     if (this.wizard.stepIndex === 2) {
+      setValue('#income-technician', (value) => { this.wizard.technician_id = value || null; });
       setValue('#income-problem', (value) => { this.wizard.device.problem_reported = value; });
       setValue('#income-physical-notes', (value) => { this.wizard.device.physical_notes = value; });
     }
@@ -1734,6 +1754,13 @@ const Ingresos = {
       entryId = entry.id;
       await this.syncAccessories(entryId, userId);
       await this.syncPhotos(entryId, userId);
+      if ((entry.technician_id || null) !== (this.wizard.technician_id || null)) {
+        await supabase.rpc('assign_repair_technician', {
+          p_income_entry_id: entryId,
+          p_technician_id: this.wizard.technician_id || null,
+          p_reason: this.wizard.mode === 'edit' ? 'Cambio desde el detalle del ingreso' : 'Asignación durante el ingreso'
+        });
+      }
 
       Components.toast({
         type: 'success',
