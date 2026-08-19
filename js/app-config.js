@@ -11,13 +11,14 @@ const CONFIG = {
     version: '1.0.0',
     description: 'Sistema de Cotizaciones y Facturas',
     // Define la URL HTTPS pública en producción. Vacío usa window.location.origin.
-    publicUrl: '',
+    publicUrl: 'https://miguelgarcia200307.github.io/fixoranew',
     timeZone: 'America/Bogota'
   },
 
   features: {
     // Activar únicamente después de aplicar la migración y desplegar ambas Edge Functions.
-    remoteSignatures: true
+    remoteSignatures: true,
+    remotePhotoCapture: true
   },
 
   storage: {

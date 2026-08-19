@@ -205,7 +205,8 @@ const INCOME_EMPTY_WIZARD = () => ({
   progress: 0,
   title: 'Nuevo ingreso',
   entryId: null,
-  technician_id: null
+  technician_id: null,
+  draft_id: null
 });
 
 const incomeUtils = {
@@ -307,7 +308,7 @@ const Ingresos = {
 
   normalizeEntry(entry) {
     const accessories = Array.isArray(entry.income_entry_accessories) ? [...entry.income_entry_accessories].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) : [];
-    const photos = Array.isArray(entry.income_entry_photos) ? [...entry.income_entry_photos].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) : [];
+    const photos = Array.isArray(entry.income_entry_photos) ? entry.income_entry_photos.filter((photo) => photo.status !== 'deleted').sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) : [];
     const mainPhoto = photos.find((photo) => photo.is_primary) || photos[0] || null;
 
     return {
@@ -590,6 +591,7 @@ const Ingresos = {
     this.wizard = INCOME_EMPTY_WIZARD();
     this.wizard.mode = mode;
     this.wizard.title = mode === 'edit' ? 'Editar ingreso' : 'Nuevo ingreso';
+    this.wizard.draft_id = mode === 'create' ? crypto.randomUUID() : null;
     if (entry) {
       this.fillWizardFromEntry(entry);
     }
@@ -602,7 +604,13 @@ const Ingresos = {
       content,
       size: 'full',
       actions: [],
-      className: 'income-wizard-modal'
+      className: 'income-wizard-modal',
+      onClose: () => {
+        window.PhotoCaptureManager?.stop?.();
+        if (this.wizard.mode === 'create' && this.wizard.draft_id && !this.wizard._saved) {
+          supabase.rpc('cancel_photo_capture_draft', { p_draft_id: this.wizard.draft_id }).catch(() => {});
+        }
+      }
     });
 
     this.bindWizardEvents();
@@ -656,6 +664,7 @@ const Ingresos = {
       mime_type: photo.mime_type || '',
       width: photo.width || null,
       height: photo.height || null,
+      origin: photo.origin || 'local',
       signedUrl: entry.mainPhoto?.id === photo.id ? entry.mainPhotoUrl || '' : '',
       removed: false
     }));
@@ -700,7 +709,7 @@ const Ingresos = {
       });
     });
 
-    root.querySelector('#income-wizard-cancel')?.addEventListener('click', () => this.wizardModal?.close());
+    root.querySelector('#income-wizard-cancel')?.addEventListener('click', () => this.cancelWizard());
     root.querySelector('#income-wizard-back')?.addEventListener('click', () => {
       if (this.wizard.stepIndex > 0) {
         this.persistWizardFromDom();
@@ -1042,10 +1051,14 @@ const Ingresos = {
       <div class="income-step-panel">
         <div class="card">
           <h3 class="card-title">Fotografías del equipo</h3>
-          <p class="card-subtitle">Puedes tomar fotos o elegirlas desde la galería.</p>
+          <p class="card-subtitle">Toma fotos aquí, elige archivos o usa la cámara de un celular mediante QR.</p>
           <div class="income-photo-actions">
             <button class="btn btn-primary" id="income-camera-btn">Tomar foto</button>
             <button class="btn btn-secondary" id="income-gallery-btn">Elegir de la galería</button>
+            <button class="btn btn-outline income-remote-photo-btn" id="income-remote-photo-btn" type="button" ${window.PhotoCaptureService?.isEnabled?.() ? '' : 'disabled aria-disabled="true"'}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/><path d="M3 7v-2a2 2 0 0 1 2-2"/><path d="M21 7v-2a2 2 0 0 0-2-2"/></svg>
+              Tomar fotos con el celular
+            </button>
             <button class="btn btn-outline" id="income-add-more-photos">Agregar más fotografías</button>
           </div>
           <div class="income-photo-guides mt-4">
@@ -1063,19 +1076,28 @@ const Ingresos = {
 
   renderPhotoCard(photo, index) {
     const url = photo.preview || photo.signedUrl || '';
+    const categories = [...new Set([...this.getPhotoSuggestions(), 'Otra'])];
     return `
       <div class="income-photo-card ${photo.removed ? 'is-removed' : ''}" data-photo-index="${index}">
         <div class="income-photo-thumb">
           ${url ? `<img src="${url}" alt="Fotografía">` : '<div class="income-photo-empty-thumb">Sin vista previa</div>'}
         </div>
         <div class="income-photo-meta">
-          <input type="text" class="form-input" data-photo-field="angle" value="${Utils.escapeHtml(photo.angle || '')}" placeholder="Ángulo">
+          <select class="form-input" data-photo-field="angle" aria-label="Categoría de la fotografía">
+            <option value="">Seleccionar categoría</option>
+            ${categories.map((category) => `<option value="${Utils.escapeHtml(category)}" ${photo.angle === category ? 'selected' : ''}>${Utils.sanitize(category)}</option>`).join('')}
+          </select>
           <textarea class="form-input" data-photo-field="description" rows="2" placeholder="Descripción">${Utils.escapeHtml(photo.description || '')}</textarea>
+          ${photo.origin === 'mobile_qr' || photo.remote ? '<span class="income-photo-origin">Capturada desde celular</span>' : ''}
           <label class="form-checkbox">
             <input type="checkbox" data-photo-field="is_primary" ${photo.is_primary ? 'checked' : ''}>
             <span class="text-sm">Principal</span>
           </label>
-          <button class="btn btn-ghost btn-sm" data-remove-photo="${index}">${photo.existing ? 'Quitar' : 'Eliminar'}</button>
+          <div class="income-photo-card-actions">
+            <button class="btn btn-ghost btn-sm" data-move-photo="-1" ${index === 0 ? 'disabled' : ''} aria-label="Mover fotografía antes">←</button>
+            <button class="btn btn-ghost btn-sm" data-move-photo="1" ${index === this.wizard.photos.length - 1 ? 'disabled' : ''} aria-label="Mover fotografía después">→</button>
+            <button class="btn btn-ghost btn-sm" data-remove-photo="${index}">${photo.existing ? 'Quitar' : 'Eliminar'}</button>
+          </div>
         </div>
       </div>
     `;
@@ -1414,6 +1436,7 @@ const Ingresos = {
     root.querySelector('#income-camera-btn')?.addEventListener('click', () => this.openCameraCapture());
     root.querySelector('#income-gallery-btn')?.addEventListener('click', () => root.querySelector('#income-photo-gallery')?.click());
     root.querySelector('#income-add-more-photos')?.addEventListener('click', () => root.querySelector('#income-photo-gallery')?.click());
+    root.querySelector('#income-remote-photo-btn')?.addEventListener('click', (event) => this.openRemotePhotoCapture(event.currentTarget));
     root.querySelector('#income-photo-camera')?.addEventListener('change', (e) => this.addPhotosFromInput(e.target.files));
     root.querySelector('#income-photo-gallery')?.addEventListener('change', (e) => this.addPhotosFromInput(e.target.files));
 
@@ -1454,6 +1477,15 @@ const Ingresos = {
         }
         this.renderWizardStep();
       });
+      card.querySelectorAll('[data-move-photo]').forEach((button) => button.addEventListener('click', (event) => {
+        event.preventDefault();
+        const target = index + Number(button.dataset.movePhoto);
+        if (target < 0 || target >= this.wizard.photos.length) return;
+        const [moved] = this.wizard.photos.splice(index, 1);
+        this.wizard.photos.splice(target, 0, moved);
+        this.wizard.photos.forEach((item, order) => { item.sort_order = order; });
+        this.renderWizardStep();
+      }));
     });
   },
 
@@ -1752,6 +1784,12 @@ const Ingresos = {
       }
 
       entryId = entry.id;
+      if (this.wizard.draft_id) {
+        await supabase.rpc('attach_draft_photos_to_ingreso', {
+          p_draft_id: this.wizard.draft_id,
+          p_ingreso_id: entryId
+        });
+      }
       await this.syncAccessories(entryId, userId);
       await this.syncPhotos(entryId, userId);
       if ((entry.technician_id || null) !== (this.wizard.technician_id || null)) {
@@ -1768,6 +1806,7 @@ const Ingresos = {
         message: `${entry.code || 'ING'} guardado correctamente`
       });
 
+      this.wizard._saved = true;
       this.wizardModal?.close();
       await this.loadEntries();
       this.render();
@@ -2200,6 +2239,10 @@ const Ingresos = {
             <div class="income-detail-actions">
               <button class="btn btn-secondary" id="income-detail-edit">Editar</button>
               <button class="btn btn-outline" id="income-detail-new">Nuevo ingreso</button>
+              <button class="btn btn-outline" id="income-detail-mobile-photos" type="button"
+                ${window.PhotoCaptureService?.isEnabled?.() && !['delivered', 'cancelled'].includes(fresh.status) ? '' : 'disabled aria-disabled="true"'}>
+                Agregar fotos desde el celular
+              </button>
               <button class="btn btn-outline" id="income-detail-signature" type="button"
                 ${SignatureService.isEnabled() ? '' : 'disabled aria-disabled="true"'}
                 title="${SignatureService.isEnabled() ? 'Solicitar firma electrónica' : 'Firma no disponible hasta desplegar el servicio en Supabase'}">
@@ -2320,6 +2363,17 @@ const Ingresos = {
       detailModal.body.querySelector('#income-detail-new')?.addEventListener('click', () => {
         this.openWizard();
       });
+      detailModal.body.querySelector('#income-detail-mobile-photos')?.addEventListener('click', (event) => {
+        window.PhotoCaptureManager?.open({ ingresoId: fresh.id, draftId: null, code: fresh.code }, event.currentTarget, async (_photos, status) => {
+          const updated = await this.fetchEntryById(fresh.id);
+          const index = this.entries.findIndex((item) => item.id === fresh.id);
+          if (updated && index >= 0) this.entries[index] = updated;
+          if (updated && status?.status === 'completed') {
+            detailModal.close();
+            await this.openDetail(updated);
+          }
+        });
+      });
       detailModal.body.querySelector('#income-detail-signature')?.addEventListener('click', (event) => {
         if (!SignatureService.isEnabled()) return;
         SignatureManager.open(fresh, event.currentTarget, async (entryId, type) => {
@@ -2375,6 +2429,35 @@ const Ingresos = {
 
   getPhotoSuggestions() {
     return (INCOME_DEVICE_CATALOG[this.wizard.device.device_type]?.photoGuides || INCOME_DEVICE_CATALOG.other.photoGuides);
+  },
+
+  async cancelWizard() {
+    if (this.wizard.mode === 'create' && this.wizard.draft_id) {
+      try { await supabase.rpc('cancel_photo_capture_draft', { p_draft_id: this.wizard.draft_id }); } catch { /* scheduled cleanup is the fallback */ }
+    }
+    this.wizardModal?.close();
+  },
+
+  openRemotePhotoCapture(trigger) {
+    if (!window.PhotoCaptureService?.isEnabled?.()) return;
+    const entry = this.wizard.entryId ? this.entries.find((item) => item.id === this.wizard.entryId) : null;
+    const context = this.wizard.entryId
+      ? { ingresoId: this.wizard.entryId, draftId: null, code: entry?.code || 'Ingreso' }
+      : { ingresoId: null, draftId: this.wizard.draft_id, code: 'Nuevo ingreso' };
+    window.PhotoCaptureManager.open(context, trigger, async (photos) => {
+      this.mergeRemotePhotos(photos);
+      if (INCOME_STEP_IDS[this.wizard.stepIndex] === 'photos') this.renderWizardStep();
+    });
+  },
+
+  mergeRemotePhotos(photos) {
+    const incoming = Array.isArray(photos) ? photos : [];
+    const byId = new Map(this.wizard.photos.map((photo) => [photo.id, photo]));
+    incoming.forEach((photo) => {
+      const current = byId.get(photo.id);
+      if (current) Object.assign(current, photo);
+      else this.wizard.photos.push({ ...photo, sort_order: this.wizard.photos.length, is_primary: this.wizard.photos.length === 0 });
+    });
   },
 
   async addPhotosFromInput(fileList) {

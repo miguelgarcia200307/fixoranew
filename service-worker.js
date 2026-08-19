@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fixora-v21';
+const CACHE_NAME = 'fixora-v22';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   './tecnicos.html',
   './tecnico.html',
   './firma.html',
+  './fotos.html',
   './detalle.html',
   './configuracion.html',
   './404.html',
@@ -25,6 +26,7 @@ const STATIC_ASSETS = [
   './css/responsive.css',
   './css/technicians.css',
   './css/signature-public.css',
+  './css/photo-capture.css',
   './js/app-config.js',
   './js/config.js',
   './js/supabase.js',
@@ -43,6 +45,8 @@ const STATIC_ASSETS = [
   './js/signatures.js',
   './js/signature-core.js',
   './js/signature-public.js',
+  './js/photo-capture-admin.js',
+  './js/photo-capture-public.js',
   './js/search.js',
   './js/pdf.js',
   './js/quote.js',
@@ -74,6 +78,11 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const requestUrl = new URL(request.url);
   if (requestUrl.origin !== self.location.origin) return;
+  // Never persist capability tokens contained in public capture/signature URLs.
+  if (requestUrl.searchParams.has('token') && (requestUrl.pathname.endsWith('/fotos.html') || requestUrl.pathname.endsWith('/firma.html'))) {
+    event.respondWith(fetch(request).catch(() => caches.match(new URL(requestUrl.pathname, requestUrl.origin), { ignoreSearch: true })));
+    return;
+  }
 
   event.respondWith(
     fetch(request).then((response) => {
@@ -88,6 +97,9 @@ self.addEventListener('fetch', (event) => {
         if (request.mode === 'navigate') {
           if (requestUrl.pathname.endsWith('/firma.html')) {
             return caches.match(new URL('./firma.html', self.registration.scope), { ignoreSearch: true });
+          }
+          if (requestUrl.pathname.endsWith('/fotos.html')) {
+            return caches.match(new URL('./fotos.html', self.registration.scope), { ignoreSearch: true });
           }
           return caches.match(new URL('./index.html', self.registration.scope));
         }

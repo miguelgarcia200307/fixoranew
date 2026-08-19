@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#6366f1">
+  <title>Fotografías del equipo · Fixora</title>
+  <link rel="icon" href="img/logo.png">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/photo-capture.css?v=1">
+</head>
+<body>
+  <main class="photo-app" id="photo-app" aria-live="polite">
+    <section class="photo-loading"><span class="photo-spinner"></span><p>Validando enlace seguro…</p></section>
+  </main>
+  <input id="photo-camera-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" hidden>
+  <input id="photo-gallery-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden>
+  <script src="js/app-config.js"></script>
+  <script src="js/photo-capture-public.js?v=1"></script>
+</body>
+</html>

@@ -388,6 +388,21 @@ verify_jwt = false
 [functions.technician-admin]
 verify_jwt = false
 
+[functions.create-photo-capture-session]
+verify_jwt = false
+[functions.revoke-photo-capture-session]
+verify_jwt = false
+[functions.get-photo-capture-session]
+verify_jwt = false
+[functions.request-photo-upload]
+verify_jwt = false
+[functions.confirm-photo-upload]
+verify_jwt = false
+[functions.complete-photo-capture-session]
+verify_jwt = false
+[functions.delete-session-photo]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
