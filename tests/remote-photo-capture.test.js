@@ -33,4 +33,14 @@ describe('remote photo capture security and integration', () => {
     expect(read('js/photo-capture-admin.js')).toContain('/fotos.html?token=');
     expect(read('service-worker.js')).toContain("searchParams.has('token')");
   });
+
+  it('supports secure bulk deletion of erroneous income entries', () => {
+    const income = read('js/ingresos.js');
+    const migration = read('supabase/migrations/20260819000200_income_bulk_deletion.sql');
+    expect(income).toContain('income-delete-selected');
+    expect(income).toContain("supabase.invoke('delete-income-entries'");
+    expect(migration).toContain('delete_income_entries_admin');
+    expect(migration).toContain('storage_cleanup_queue');
+    expect(fs.existsSync(path.join(root, 'supabase/functions/delete-income-entries/index.ts'))).toBe(true);
+  });
 });

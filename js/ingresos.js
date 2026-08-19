@@ -255,6 +255,7 @@ const Ingresos = {
   detailOpening: false,
   config: null,
   technicians: [],
+  selectedIncomeIds: new Set(),
 
   async init() {
     if (!Auth.requireAuth()) return;
@@ -474,14 +475,43 @@ const Ingresos = {
       return;
     }
 
+    const visibleIds = new Set(this.filteredEntries.map((entry) => entry.id));
+    this.selectedIncomeIds.forEach((id) => { if (!this.entries.some((entry) => entry.id === id)) this.selectedIncomeIds.delete(id); });
+    const selectedVisible = this.filteredEntries.filter((entry) => this.selectedIncomeIds.has(entry.id)).length;
     container.innerHTML = `
+      <div class="income-selection-toolbar" aria-live="polite">
+        <label class="form-checkbox income-select-all">
+          <input type="checkbox" id="income-select-all" ${selectedVisible === this.filteredEntries.length ? 'checked' : ''}>
+          <span>Seleccionar visibles</span>
+        </label>
+        <span class="income-selection-count">${this.selectedIncomeIds.size} seleccionado${this.selectedIncomeIds.size === 1 ? '' : 's'}</span>
+        <button class="btn btn-danger btn-sm" id="income-delete-selected" type="button" ${this.selectedIncomeIds.size ? '' : 'disabled'}>
+          Eliminar seleccionados
+        </button>
+      </div>
       <div class="income-grid">
         ${this.filteredEntries.map((entry) => this.renderEntryCard(entry)).join('')}
       </div>
     `;
 
+    container.querySelector('#income-select-all')?.addEventListener('change', (event) => {
+      if (event.target.checked) visibleIds.forEach((id) => this.selectedIncomeIds.add(id));
+      else visibleIds.forEach((id) => this.selectedIncomeIds.delete(id));
+      this.renderList();
+    });
+    container.querySelector('#income-delete-selected')?.addEventListener('click', () => this.deleteSelectedIncomes());
+    container.querySelectorAll('[data-income-select]').forEach((checkbox) => {
+      checkbox.addEventListener('click', (event) => event.stopPropagation());
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) this.selectedIncomeIds.add(checkbox.dataset.incomeSelect);
+        else this.selectedIncomeIds.delete(checkbox.dataset.incomeSelect);
+        this.renderList();
+      });
+    });
+
     container.querySelectorAll('[data-income-id]').forEach((card) => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (event) => {
+        if (event.target.closest('.income-card-selector')) return;
         const entry = this.entries.find((item) => item.id === card.dataset.incomeId);
         if (entry) this.openDetail(entry);
       });
@@ -497,6 +527,10 @@ const Ingresos = {
 
     return `
       <article class="income-card" data-income-id="${entry.id}">
+        <label class="income-card-selector" title="Seleccionar ${Utils.escapeHtml(entry.code || 'ingreso')}" aria-label="Seleccionar ${Utils.escapeHtml(entry.code || 'ingreso')}">
+          <input type="checkbox" data-income-select="${entry.id}" ${this.selectedIncomeIds.has(entry.id) ? 'checked' : ''}>
+          <span aria-hidden="true"></span>
+        </label>
         <div class="income-card-media">
           ${photoSrc ? `<img src="${photoSrc}" alt="Foto principal">` : `<div class="income-card-placeholder">${INCOME_DEVICE_CATALOG[entry.device_type]?.icon || INCOME_DEVICE_CATALOG.other.icon}</div>`}
         </div>
@@ -531,6 +565,37 @@ const Ingresos = {
       cancelled: 'Cancelado'
     };
     return labels[status] || 'Recibido';
+  },
+
+  async deleteSelectedIncomes(ids = null) {
+    const selected = ids ? [...new Set(ids)] : [...this.selectedIncomeIds];
+    const entries = selected.map((id) => this.entries.find((entry) => entry.id === id)).filter(Boolean);
+    if (!entries.length) return;
+    const preview = entries.slice(0, 5).map((entry) => entry.code).join(', ');
+    const more = entries.length > 5 ? ` y ${entries.length - 5} más` : '';
+    const confirmed = await Components.confirm({
+      title: entries.length === 1 ? 'Eliminar ingreso' : `Eliminar ${entries.length} ingresos`,
+      message: `Se eliminarán definitivamente ${preview}${more}, incluyendo fotografías, firmas y registros técnicos relacionados. Esta acción no se puede deshacer.`,
+      confirmLabel: entries.length === 1 ? 'Eliminar ingreso' : 'Eliminar ingresos',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+    const loading = Components.showLoading(entries.length === 1 ? 'Eliminando ingreso...' : `Eliminando ${entries.length} ingresos...`);
+    try {
+      const result = await supabase.invoke('delete-income-entries', { income_ids: entries.map((entry) => entry.id) });
+      const deletedIds = new Set(entries.map((entry) => entry.id));
+      this.entries = this.entries.filter((entry) => !deletedIds.has(entry.id));
+      deletedIds.forEach((id) => this.selectedIncomeIds.delete(id));
+      this.detailModal?.close();
+      this.render();
+      Components.toast({
+        type: result.cleanup_pending ? 'warning' : 'success',
+        title: 'Ingresos eliminados',
+        message: result.cleanup_pending ? 'Los registros se eliminaron; algunos archivos quedaron programados para limpieza.' : `${result.deleted_count} ingreso${result.deleted_count === 1 ? '' : 's'} eliminado${result.deleted_count === 1 ? '' : 's'} correctamente.`
+      });
+    } catch (error) {
+      Components.toast({ type: 'error', title: 'No se pudo eliminar', message: error?.details?.error || error.message || 'Inténtalo nuevamente.' });
+    } finally { Components.hideLoading(loading); }
   },
 
   setupEventListeners() {
@@ -2238,6 +2303,7 @@ const Ingresos = {
             </div>
             <div class="income-detail-actions">
               <button class="btn btn-secondary" id="income-detail-edit">Editar</button>
+              <button class="btn btn-danger" id="income-detail-delete" type="button">Eliminar ingreso</button>
               <button class="btn btn-outline" id="income-detail-new">Nuevo ingreso</button>
               <button class="btn btn-outline" id="income-detail-mobile-photos" type="button"
                 ${window.PhotoCaptureService?.isEnabled?.() && !['delivered', 'cancelled'].includes(fresh.status) ? '' : 'disabled aria-disabled="true"'}>
@@ -2360,6 +2426,7 @@ const Ingresos = {
       detailModal.body.querySelector('#income-detail-edit')?.addEventListener('click', () => {
         this.openWizard(fresh, 'edit');
       });
+      detailModal.body.querySelector('#income-detail-delete')?.addEventListener('click', () => this.deleteSelectedIncomes([fresh.id]));
       detailModal.body.querySelector('#income-detail-new')?.addEventListener('click', () => {
         this.openWizard();
       });
