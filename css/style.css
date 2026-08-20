@@ -1106,9 +1106,21 @@
 
 .income-detail-header {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+  overflow: hidden;
+}
+
+.income-detail-identity-row {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+}
+
+.income-detail-identity {
+  min-width: 0;
 }
 
 .income-detail-code {
@@ -1122,10 +1134,128 @@
   margin-top: 2px;
 }
 
-.income-detail-actions {
+.income-detail-status {
+  margin-top: var(--space-2);
+}
+
+.income-detail-admin-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.income-detail-admin-actions .btn,
+.income-detail-operation-bar .btn {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.income-detail-operation-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-primary);
+}
+
+.income-detail-operation-bar .btn {
+  width: 100%;
+}
+
+.btn-tracking {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 38%, var(--border-primary));
+  font-weight: var(--font-semibold);
+}
+
+.btn-tracking:hover {
+  background: color-mix(in srgb, var(--color-primary) 17%, transparent);
+  border-color: var(--color-primary);
+}
+
+.btn-whatsapp {
+  background: #16a34a;
+  color: #fff;
+  border-color: #15803d;
+  font-weight: var(--font-semibold);
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.25);
+}
+
+.btn-whatsapp:hover { background: #15803d; border-color: #166534; }
+.btn-whatsapp:active { background: #166534; }
+.btn-whatsapp:disabled { background: #86c99b; border-color: #86c99b; color: #fff; }
+
+.btn-danger-soft {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 48%, var(--border-primary));
+  font-weight: var(--font-semibold);
+}
+
+.btn-danger-soft:hover {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  border-color: var(--color-danger);
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 2px solid rgba(255,255,255,.55);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: income-button-spin .7s linear infinite;
+}
+
+@keyframes income-button-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .income-detail-operation-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .income-detail-identity-row { flex-direction: column; align-items: stretch; }
+  .income-detail-admin-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .income-detail-admin-actions .btn { width: 100%; }
+  .income-detail-operation-bar { gap: var(--space-2); }
+  .income-detail-operation-bar .btn-whatsapp,
+  .income-detail-operation-bar #income-detail-pdf { grid-column: 1 / -1; }
+}
+
+@media (max-width: 390px) {
+  .income-detail-admin-actions { grid-template-columns: 1fr; }
+  .income-detail-operation-bar { grid-template-columns: 1fr; }
+  .income-detail-operation-bar .btn-whatsapp,
+  .income-detail-operation-bar #income-detail-pdf { grid-column: auto; }
+}
+
+.tracking-template-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.tracking-template-heading .form-label { margin-bottom: 0; }
+
+.tracking-template-preview {
+  min-height: 12rem;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .tracking-template-heading { align-items: stretch; flex-direction: column; }
 }
 
 .income-signature-summary {
@@ -2374,3 +2504,4 @@
   border-radius: var(--radius-full);
   background: currentColor;
 }
+.tracking-manager{display:grid;gap:20px}.tracking-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.tracking-status{display:inline-flex;align-items:center;min-height:30px;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:800}.tracking-status--active{background:#dcfce7;color:#166534}.tracking-status--revoked{background:#fee2e2;color:#991b1b}.tracking-link-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.tracking-manager-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tracking-manager-meta>div{display:flex;flex-direction:column;padding:14px;border:1px solid var(--border-color,#e5e7eb);border-radius:12px}.tracking-manager-meta span{font-size:.75rem;color:var(--text-secondary,#667085)}.tracking-manager-actions{display:flex;flex-wrap:wrap;gap:8px}.tracking-manager-actions .btn{min-height:44px}.tracking-qr{text-align:center}.tracking-qr img{max-width:min(320px,100%);height:auto}@media(max-width:600px){.tracking-link-row{grid-template-columns:1fr}.tracking-manager-meta{grid-template-columns:1fr}.tracking-manager-actions{display:grid;grid-template-columns:1fr}.tracking-manager-actions .btn{width:100%}}

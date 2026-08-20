@@ -404,6 +404,16 @@ verify_jwt = false
 verify_jwt = false
 [functions.delete-income-entries]
 verify_jwt = false
+[functions.create-tracking-link]
+verify_jwt = false
+[functions.get-public-tracking]
+verify_jwt = false
+[functions.regenerate-tracking-link]
+verify_jwt = false
+[functions.revoke-tracking-link]
+verify_jwt = false
+[functions.publish-repair-update]
+verify_jwt = false
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"

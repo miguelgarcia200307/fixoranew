@@ -144,9 +144,15 @@ const PDFGenerator = {
   _incomeStatusLabel(status) {
     const labels = {
       received: 'Recibido',
-      in_review: 'En revisión',
+      assigned: 'Asignado',
+      diagnosing: 'En diagnóstico',
+      waiting_customer: 'Esperando respuesta del cliente',
+      waiting_authorization: 'Esperando autorización',
+      waiting_part: 'Esperando repuesto',
       repairing: 'En reparación',
-      ready: 'Listo',
+      testing: 'En pruebas',
+      finished: 'Terminado',
+      ready_for_delivery: 'Listo para entregar',
       delivered: 'Entregado',
       cancelled: 'Cancelado'
     };

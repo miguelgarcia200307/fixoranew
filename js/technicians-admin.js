@@ -1,7 +1,7 @@
 /* FIXORA - Technician administration */
 const TechniciansAdmin = {
   technicians: [], repairs: [], filteredTechnicians: [], filteredRepairs: [], submitting: false,
-  statusLabels: {received:'Recibido',assigned:'Asignado',diagnosing:'En diagnóstico',awaiting_authorization:'Esperando autorización',awaiting_part:'Esperando repuesto',repairing:'En reparación',testing:'En pruebas',ready:'Terminado',delivered:'Entregado',cancelled:'Cancelado'},
+  statusLabels: {received:'Recibido',assigned:'Asignado',diagnosing:'En diagnóstico',waiting_customer:'Esperando respuesta del cliente',waiting_authorization:'Esperando autorización',waiting_part:'Esperando repuesto',repairing:'En reparación',testing:'En pruebas',finished:'Terminado',ready_for_delivery:'Listo para entregar',delivered:'Entregado',cancelled:'Cancelado'},
   async init(){this.bind();await this.reload();},
   bind(){
     document.getElementById('new-technician')?.addEventListener('click',()=>this.openCreate());
@@ -38,11 +38,11 @@ const TechniciansAdmin = {
     this.filteredRepairs=this.repairs.filter(r=>{const client=Array.isArray(r.clients)?r.clients[0]:r.clients;const hay=[r.code,r.brand,r.model,r.device_custom_type,client?.name,client?.last_name].join(' ').toLowerCase();return(!q||hay.includes(q))&&(tech==='all'||(tech==='unassigned'?!r.technician_id:r.technician_id===tech))&&(status==='all'||r.status===status)});this.renderRepairs();
   },
   renderStats(){
-    const active=this.technicians.filter(t=>t.is_active).length,activeJobs=this.repairs.filter(r=>!['ready','delivered','cancelled'].includes(r.status)).length,done=this.repairs.filter(r=>['ready','delivered'].includes(r.status)).length,unassigned=this.repairs.filter(r=>!r.technician_id&&!['delivered','cancelled'].includes(r.status)).length;
+    const active=this.technicians.filter(t=>t.is_active).length,activeJobs=this.repairs.filter(r=>!['finished','ready_for_delivery','delivered','cancelled'].includes(r.status)).length,done=this.repairs.filter(r=>['finished','ready_for_delivery','delivered'].includes(r.status)).length,unassigned=this.repairs.filter(r=>!r.technician_id&&!['delivered','cancelled'].includes(r.status)).length;
     document.getElementById('technician-stats').innerHTML=this.stat('Técnicos activos',active)+this.stat('Trabajos activos',activeJobs)+this.stat('Terminados',done)+this.stat('Sin asignar',unassigned);const badge=document.getElementById('unassigned-badge');if(badge)badge.textContent=unassigned?`(${unassigned})`:'';
   },
   stat(label,value){return `<div class="technician-stat"><span>${label}</span><strong>${value}</strong></div>`;},
-  jobsFor(id){return this.repairs.filter(r=>r.technician_id===id&&!['ready','delivered','cancelled'].includes(r.status)).length;},
+  jobsFor(id){return this.repairs.filter(r=>r.technician_id===id&&!['finished','ready_for_delivery','delivered','cancelled'].includes(r.status)).length;},
   renderTechnicians(){
     const body=document.getElementById('technician-table-body'),mobile=document.getElementById('technician-mobile-list'),empty=document.getElementById('technician-empty');
     if(!this.filteredTechnicians.length){body.innerHTML='';mobile.innerHTML='';empty.innerHTML='<div class="empty-state"><h3 class="empty-state-title">No hay técnicos</h3><p class="empty-state-description">Crea el primer acceso técnico o cambia los filtros.</p></div>';return;}empty.innerHTML='';

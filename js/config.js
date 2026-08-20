@@ -69,6 +69,7 @@ const Config = {
       { id: 'branding', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label: 'Branding' },
       { id: 'documents', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', label: 'Documentos' },
       { id: 'taxes', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', label: 'Impuestos' },
+      { id: 'tracking', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>', label: 'Seguimiento y WhatsApp' },
       { id: 'footer', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', label: 'Pie de página' }
     ];
 
@@ -292,6 +293,31 @@ const Config = {
         </div>
       `,
 
+      tracking: `
+        <h3 class="config-section-title">Seguimiento y WhatsApp</h3>
+        <p class="config-section-desc">Información pública y mensajes preparados para el cliente.</p>
+        <div class="grid-form">
+          <div class="form-group" style="grid-column:1/-1">
+            <div class="tracking-template-heading">
+              <label class="form-label" for="cfg-tracking-intake">Plantilla de ingreso por WhatsApp</label>
+              <button class="btn btn-secondary btn-sm" id="cfg-restore-intake-template" type="button">Restaurar predeterminada</button>
+            </div>
+            <textarea class="form-input tracking-template" id="cfg-tracking-intake" rows="14">${Utils.escapeHtml(c.tracking_intake_template || TrackingService.defaults.intake)}</textarea>
+            <small class="form-help">Variables disponibles: {{cliente_nombre}}, {{negocio_nombre}}, {{codigo_ingreso}}, {{fecha_ingreso}}, {{dispositivo}}, {{motivo_ingreso}}, {{estado_actual}}, {{enlace_seguimiento}}.</small>
+          </div>
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label">Vista previa del mensaje de ingreso</label><pre class="tracking-template-preview" id="cfg-tracking-intake-preview" aria-live="polite"></pre></div>
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label">Plantilla de actualización</label><textarea class="form-input tracking-template" id="cfg-tracking-update" rows="9">${Utils.escapeHtml(c.tracking_update_template || TrackingService.defaults.update)}</textarea></div>
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label">Plantilla de equipo terminado</label><textarea class="form-input tracking-template" id="cfg-tracking-finished" rows="8">${Utils.escapeHtml(c.tracking_finished_template || TrackingService.defaults.finished)}</textarea></div>
+          <div class="form-group"><label class="form-label">Conservación después de entregar</label><select class="form-select" id="cfg-tracking-retention"><option value="" ${c.tracking_retention_days==null?'selected':''}>Sin vencimiento automático</option>${[30,90,180].map(d=>`<option value="${d}" ${Number(c.tracking_retention_days)===d?'selected':''}>${d} días</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">Teléfono público de contacto</label><input class="form-input" id="cfg-tracking-phone" type="tel" value="${Utils.escapeHtml(c.tracking_contact_phone || c.whatsapp || c.phone || '')}"></div>
+          <div class="form-group"><label><input type="checkbox" id="cfg-tracking-model" ${c.tracking_show_model!==false?'checked':''}> Mostrar modelo</label></div>
+          <div class="form-group"><label><input type="checkbox" id="cfg-tracking-serial" ${c.tracking_show_masked_serial?'checked':''}> Mostrar serial enmascarado</label></div>
+          <div class="form-group"><label><input type="checkbox" id="cfg-tracking-photos" ${c.tracking_show_photos!==false?'checked':''}> Mostrar fotografías públicas</label></div>
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label">Texto del pie público</label><input class="form-input" id="cfg-tracking-footer" maxlength="300" value="${Utils.escapeHtml(c.tracking_footer || 'Seguimiento seguro proporcionado por Fixora.')}"></div>
+          <div class="alert alert-info" id="tracking-template-status" style="grid-column:1/-1">Validando plantillas…</div>
+        </div>
+      `,
+
       footer: `
         <h3 class="config-section-title">Pie de Página</h3>
         <p class="config-section-desc">Texto que aparecerá en la parte inferior de los documentos</p>
@@ -317,6 +343,41 @@ const Config = {
   },
 
   setupSectionListeners(section) {
+    if (section === 'tracking') {
+      const status = document.getElementById('tracking-template-status');
+      const intake = document.getElementById('cfg-tracking-intake');
+      const preview = document.getElementById('cfg-tracking-intake-preview');
+      const previewData = {
+        cliente_nombre: 'María López',
+        negocio_nombre: this.config?.business_name || 'Fixora',
+        codigo_ingreso: 'ING-000123',
+        fecha_ingreso: new Date().toLocaleDateString('es-CO'),
+        dispositivo: 'Portátil Lenovo IdeaPad',
+        tipo_dispositivo: 'Portátil',
+        marca: 'Lenovo',
+        modelo: 'IdeaPad',
+        motivo_ingreso: 'No enciende',
+        servicio_solicitado: 'No enciende',
+        estado_actual: 'Recibido',
+        descripcion_actualizacion: '',
+        enlace_seguimiento: `${String(CONFIG.app.publicUrl || location.origin).replace(/\/$/, '')}/seguimiento.html?token=…`,
+        telefono_negocio: this.config?.tracking_contact_phone || this.config?.whatsapp || this.config?.phone || ''
+      };
+      const validate = () => {
+        const checks = [...document.querySelectorAll('.tracking-template')].map((field) => TrackingService.validateTemplate(field.value));
+        const invalid = checks.find((item) => !item.valid), missing = checks.find((item) => !item.hasLink);
+        status.className = `alert ${invalid || missing ? 'alert-warning' : 'alert-info'}`;
+        status.textContent = invalid ? `Variable no reconocida: ${invalid.unknown.join(', ')}` : missing ? 'Advertencia: una plantilla no contiene {{enlace_seguimiento}}.' : 'Plantillas válidas y con enlace de seguimiento.';
+        const intakeCheck = TrackingService.validateTemplate(intake?.value || '');
+        preview.textContent = intakeCheck.valid ? TrackingService.renderTemplate(intake.value, previewData) : 'Corrige las variables no reconocidas para ver la vista previa.';
+      };
+      document.querySelectorAll('.tracking-template').forEach((field) => field.addEventListener('input', validate));
+      document.getElementById('cfg-restore-intake-template')?.addEventListener('click', () => {
+        intake.value = TrackingService.defaults.intake;
+        intake.dispatchEvent(new Event('input'));
+      });
+      validate();
+    }
     if (section === 'branding') {
       document.getElementById('cfg-color-primary')?.addEventListener('input', (e) => {
         document.getElementById('cfg-color-primary-text').value = e.target.value;
@@ -399,7 +460,16 @@ const Config = {
       footer_message: getValue('cfg-footer-message') || existing.footer_message || '',
       policies: getValue('cfg-policies') || existing.policies || '',
       conditions: getValue('cfg-conditions') || existing.conditions || '',
-      logo_url: this.config?.logo_url || ''
+      logo_url: this.config?.logo_url || '',
+      tracking_intake_template: getValue('cfg-tracking-intake') || existing.tracking_intake_template || TrackingService.defaults.intake,
+      tracking_update_template: getValue('cfg-tracking-update') || existing.tracking_update_template || TrackingService.defaults.update,
+      tracking_finished_template: getValue('cfg-tracking-finished') || existing.tracking_finished_template || TrackingService.defaults.finished,
+      tracking_retention_days: getValue('cfg-tracking-retention') ? Number(getValue('cfg-tracking-retention')) : (existing.tracking_retention_days ?? null),
+      tracking_show_model: document.getElementById('cfg-tracking-model')?.checked ?? existing.tracking_show_model ?? true,
+      tracking_show_masked_serial: document.getElementById('cfg-tracking-serial')?.checked ?? existing.tracking_show_masked_serial ?? false,
+      tracking_show_photos: document.getElementById('cfg-tracking-photos')?.checked ?? existing.tracking_show_photos ?? true,
+      tracking_contact_phone: getValue('cfg-tracking-phone') || existing.tracking_contact_phone || '',
+      tracking_footer: getValue('cfg-tracking-footer') || existing.tracking_footer || 'Seguimiento seguro proporcionado por Fixora.'
     };
   },
 
@@ -408,6 +478,10 @@ const Config = {
     if (!userId) return;
 
     const data = this.collectData();
+    const templateChecks = [data.tracking_intake_template, data.tracking_update_template, data.tracking_finished_template].map((value) => TrackingService.validateTemplate(value));
+    const invalidTemplate = templateChecks.find((item) => !item.valid);
+    if (invalidTemplate) { Components.toast({ type: 'error', message: `Variables no reconocidas: ${invalidTemplate.unknown.join(', ')}` }); return; }
+    if (templateChecks.some((item) => !item.hasLink) && !await Components.confirm({ title: 'Plantilla sin enlace', message: 'Una plantilla no contiene {{enlace_seguimiento}}. El cliente no recibirá el acceso en ese mensaje.', confirmLabel: 'Guardar de todos modos' })) return;
     data.updated_at = new Date().toISOString();
 
     try {

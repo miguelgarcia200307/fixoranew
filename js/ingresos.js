@@ -294,7 +294,7 @@ const Ingresos = {
       if (!userId) return;
 
       const result = await supabase.from('income_entries')
-        .select('*, clients(id,name,last_name,phone,company,email,address,document), income_entry_accessories(*), income_entry_photos(*)')
+        .select('*, clients(id,name,last_name,phone,whatsapp,country,company,email,address,document), income_entry_accessories(*), income_entry_photos(*)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(150);
@@ -558,9 +558,15 @@ const Ingresos = {
   getStatusLabel(status) {
     const labels = {
       received: 'Recibido',
-      in_review: 'En revisión',
+      assigned: 'Asignado',
+      diagnosing: 'En diagnóstico',
+      waiting_customer: 'Esperando respuesta del cliente',
+      waiting_authorization: 'Esperando autorización',
+      waiting_part: 'Esperando repuesto',
       repairing: 'En reparación',
-      ready: 'Listo',
+      testing: 'En pruebas',
+      finished: 'Terminado',
+      ready_for_delivery: 'Listo para entregar',
       delivered: 'Entregado',
       cancelled: 'Cancelado'
     };
@@ -573,9 +579,12 @@ const Ingresos = {
     if (!entries.length) return;
     const preview = entries.slice(0, 5).map((entry) => entry.code).join(', ');
     const more = entries.length > 5 ? ` y ${entries.length - 5} más` : '';
+    const singleClientName = entries.length === 1 ? [entries[0].client?.name, entries[0].client?.last_name].filter(Boolean).join(' ') : '';
     const confirmed = await Components.confirm({
       title: entries.length === 1 ? 'Eliminar ingreso' : `Eliminar ${entries.length} ingresos`,
-      message: `Se eliminarán definitivamente ${preview}${more}, incluyendo fotografías, firmas y registros técnicos relacionados. Esta acción no se puede deshacer.`,
+      message: entries.length === 1
+        ? `Se eliminará definitivamente ${preview}${singleClientName ? ` del cliente ${singleClientName}` : ''}, incluyendo fotografías, firmas, seguimiento e historial relacionado. Esta acción no se puede deshacer.`
+        : `Se eliminarán definitivamente ${preview}${more}, incluyendo fotografías, firmas y registros técnicos relacionados. Esta acción no se puede deshacer.`,
       confirmLabel: entries.length === 1 ? 'Eliminar ingreso' : 'Eliminar ingresos',
       type: 'danger'
     });
@@ -632,7 +641,7 @@ const Ingresos = {
     try {
       const userId = Auth.getUserId();
       const result = await supabase.from('income_entries')
-        .select('*, clients(id,name,last_name,phone,company,email,address,document), income_entry_accessories(*), income_entry_photos(*)')
+        .select('*, clients(id,name,last_name,phone,whatsapp,country,company,email,address,document), income_entry_accessories(*), income_entry_photos(*)')
         .eq('user_id', userId)
         .eq('id', id)
         .limit(1);
@@ -1875,7 +1884,18 @@ const Ingresos = {
       this.wizardModal?.close();
       await this.loadEntries();
       this.render();
-      this.openDetail(this.entries.find((item) => item.id === entryId) || entry);
+      const savedEntry = this.entries.find((item) => item.id === entryId) || entry;
+      if (this.wizard.mode === 'create' && window.TrackingService) {
+        try {
+          await TrackingService.create(entryId);
+          await TrackingService.showManager(savedEntry, this.config || {}, { kind: 'intake', created: true });
+        } catch (trackingError) {
+          Components.toast({ type: 'warning', title: 'Ingreso guardado', message: `El ingreso quedó registrado, pero no se pudo activar el seguimiento: ${trackingError.message}` });
+          this.openDetail(savedEntry);
+        }
+      } else {
+        this.openDetail(savedEntry);
+      }
     } catch (error) {
       console.error('Save income error:', error);
       if (entryId && this.wizard.mode === 'create') {
@@ -2072,7 +2092,7 @@ const Ingresos = {
   async fetchEntryById(entryId) {
     const userId = Auth.getUserId();
     const result = await supabase.from('income_entries')
-      .select('*, clients(id,name,last_name,phone,company,email,address,document), income_entry_accessories(*), income_entry_photos(*)')
+      .select('*, clients(id,name,last_name,phone,whatsapp,country,company,email,address,document), income_entry_accessories(*), income_entry_photos(*)')
       .eq('user_id', userId)
       .eq('id', entryId)
       .limit(1);
@@ -2297,17 +2317,27 @@ const Ingresos = {
       content: `
         <div class="income-detail">
           <div class="income-detail-header card">
-            <div>
-              <div class="income-detail-code">${Utils.sanitize(fresh.code || '-')}</div>
-              <div class="income-detail-subtitle">${Utils.sanitize(`${client.name || ''} ${client.last_name || ''}`.trim() || 'Sin cliente')}</div>
+            <div class="income-detail-identity-row">
+              <div class="income-detail-identity">
+                <div class="income-detail-code">${Utils.sanitize(fresh.code || '-')}</div>
+                <div class="income-detail-subtitle">${Utils.sanitize(`${client.name || ''} ${client.last_name || ''}`.trim() || 'Sin cliente')}</div>
+                <span class="income-detail-status badge badge-info">${Utils.sanitize(this.getStatusLabel(fresh.status))}</span>
+              </div>
+              <div class="income-detail-admin-actions" aria-label="Acciones administrativas">
+                <button class="btn btn-secondary" id="income-detail-edit" type="button">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+                  Editar
+                </button>
+                <button class="btn btn-danger-soft" id="income-detail-delete" type="button">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+                  Eliminar ingreso
+                </button>
+              </div>
             </div>
-            <div class="income-detail-actions">
-              <button class="btn btn-secondary" id="income-detail-edit">Editar</button>
-              <button class="btn btn-danger" id="income-detail-delete" type="button">Eliminar ingreso</button>
-              <button class="btn btn-outline" id="income-detail-new">Nuevo ingreso</button>
-              <button class="btn btn-outline" id="income-detail-mobile-photos" type="button"
-                ${window.PhotoCaptureService?.isEnabled?.() && !['delivered', 'cancelled'].includes(fresh.status) ? '' : 'disabled aria-disabled="true"'}>
-                Agregar fotos desde el celular
+            <div class="income-detail-operation-bar" role="group" aria-label="Acciones del ingreso">
+              <button class="btn btn-tracking" id="income-detail-tracking" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+                Seguimiento
               </button>
               <button class="btn btn-outline" id="income-detail-signature" type="button"
                 ${SignatureService.isEnabled() ? '' : 'disabled aria-disabled="true"'}
@@ -2315,8 +2345,12 @@ const Ingresos = {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21c3-4 4-8 7-11 2-2 4-1 3 2-1 3-4 5-2 6 2 1 4-3 5-2 1 1 0 3 2 3 1 0 2-1 3-2"/><path d="M14 5l2-2 5 5-2 2"/></svg>
                 Firma
               </button>
-              <button class="btn btn-primary" id="income-detail-pdf">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+              <button class="btn btn-whatsapp" id="income-detail-whatsapp" type="button" aria-label="Enviar información del ingreso por WhatsApp" title="Enviar comprobante y seguimiento al cliente">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9 9 0 0 1-3.8-.9L3 21l1.8-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 8.5c.5 3 2 4.5 5 5l1.5-1.5 2 1c-.5 2-1.8 3-3.5 3-3.8-.5-6.5-3.2-7-7 0-1.7 1-3 3-3.5l1 2Z"/></svg>
+                <span>Enviar por WhatsApp</span>
+              </button>
+              <button class="btn btn-primary" id="income-detail-pdf" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
                 Generar PDF
               </button>
             </div>
@@ -2426,21 +2460,12 @@ const Ingresos = {
       detailModal.body.querySelector('#income-detail-edit')?.addEventListener('click', () => {
         this.openWizard(fresh, 'edit');
       });
+      detailModal.body.querySelector('#income-detail-tracking')?.addEventListener('click', async () => {
+        try { await TrackingService.showManager(fresh, this.config || {}, { kind: 'intake' }); }
+        catch (error) { Components.toast({ type: 'error', title: 'No se pudo abrir el seguimiento', message: error.message }); }
+      });
+      detailModal.body.querySelector('#income-detail-whatsapp')?.addEventListener('click', (event) => this.sendDetailWhatsApp(fresh, event.currentTarget));
       detailModal.body.querySelector('#income-detail-delete')?.addEventListener('click', () => this.deleteSelectedIncomes([fresh.id]));
-      detailModal.body.querySelector('#income-detail-new')?.addEventListener('click', () => {
-        this.openWizard();
-      });
-      detailModal.body.querySelector('#income-detail-mobile-photos')?.addEventListener('click', (event) => {
-        window.PhotoCaptureManager?.open({ ingresoId: fresh.id, draftId: null, code: fresh.code }, event.currentTarget, async (_photos, status) => {
-          const updated = await this.fetchEntryById(fresh.id);
-          const index = this.entries.findIndex((item) => item.id === fresh.id);
-          if (updated && index >= 0) this.entries[index] = updated;
-          if (updated && status?.status === 'completed') {
-            detailModal.close();
-            await this.openDetail(updated);
-          }
-        });
-      });
       detailModal.body.querySelector('#income-detail-signature')?.addEventListener('click', (event) => {
         if (!SignatureService.isEnabled()) return;
         SignatureManager.open(fresh, event.currentTarget, async (entryId, type) => {
@@ -2471,6 +2496,65 @@ const Ingresos = {
     } finally {
       this.detailOpening = false;
       Components.hideLoading(loadingToken);
+    }
+  },
+
+  async sendDetailWhatsApp(entry, button) {
+    if (!window.TrackingService || !entry?.id || !button || button.dataset.busy === 'true') return;
+    const initialClient = entry.client || {};
+    const initialPhone = initialClient.whatsapp || initialClient.phone || '';
+    if (!initialPhone) {
+      const editClient = await Components.confirm({ title: 'Cliente sin teléfono', message: 'Este cliente no tiene un número de teléfono registrado.', confirmLabel: 'Editar cliente' });
+      if (editClient) window.location.href = 'clientes.html';
+      return;
+    }
+    if (!TrackingService.normalizePhone(initialPhone, initialClient.country || this.config?.country || 'Colombia')) {
+      Components.toast({ type: 'error', title: 'Número no válido', message: 'El número de teléfono registrado no es válido para WhatsApp. Verifica los datos del cliente.' });
+      return;
+    }
+
+    const popup = window.open('', 'fixora_whatsapp');
+    if (!popup) {
+      Components.toast({ type: 'error', title: 'Ventana bloqueada', message: 'El navegador bloqueó la apertura de WhatsApp. Habilita las ventanas emergentes e inténtalo nuevamente.' });
+      return;
+    }
+    popup.document.title = 'Preparando WhatsApp · Fixora';
+    popup.document.body.innerHTML = '<main style="font-family:system-ui;padding:32px;text-align:center"><h1 style="font-size:20px">Preparando WhatsApp…</h1><p>Estamos creando el enlace seguro del ingreso.</p></main>';
+    TrackingService._pendingPopup = popup;
+    const originalContent = button.innerHTML;
+    button.dataset.busy = 'true';
+    button.disabled = true;
+    button.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span>Preparando…</span>';
+    let whatsappOpened = false;
+
+    try {
+      const currentEntry = await this.fetchEntryById(entry.id);
+      if (!currentEntry || currentEntry.id !== entry.id) throw new Error('No se pudo obtener la información actualizada del ingreso.');
+      const currentClient = currentEntry.client || {};
+      const currentPhone = currentClient.whatsapp || currentClient.phone || '';
+      if (!currentPhone) throw new Error('Este cliente no tiene un número de teléfono registrado.');
+      if (!TrackingService.normalizePhone(currentPhone, currentClient.country || this.config?.country || 'Colombia')) throw new Error('El número de teléfono registrado no es válido para WhatsApp. Verifica los datos del cliente.');
+
+      let trackingResult;
+      try {
+        trackingResult = await TrackingService.create(currentEntry.id);
+      } catch (error) {
+        if (!error?.details?.requires_confirmation) throw error;
+        const confirmed = await Components.confirm({ title: 'Enlace revocado', message: 'El enlace anterior fue revocado. ¿Deseas generar uno nuevo para enviar la información?', confirmLabel: 'Generar enlace' });
+        if (!confirmed) return;
+        trackingResult = await TrackingService.regenerate(currentEntry.id);
+      }
+      await TrackingService.openWhatsApp({ entry: currentEntry, config: this.config || {}, tracking: trackingResult.tracking, kind: 'intake', popup });
+      whatsappOpened = true;
+      Components.toast({ type: 'success', title: 'WhatsApp abierto', message: 'WhatsApp abierto con la información del ingreso.' });
+    } catch (error) {
+      Components.toast({ type: 'error', title: 'No se pudo preparar WhatsApp', message: error.message || 'Inténtalo nuevamente.' });
+    } finally {
+      if (TrackingService._pendingPopup === popup) TrackingService._pendingPopup = null;
+      if (!whatsappOpened) popup.close();
+      button.dataset.busy = 'false';
+      button.disabled = false;
+      button.innerHTML = originalContent;
     }
   },
 

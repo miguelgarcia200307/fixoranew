@@ -18,7 +18,8 @@ const CONFIG = {
   features: {
     // Activar únicamente después de aplicar la migración y desplegar ambas Edge Functions.
     remoteSignatures: true,
-    remotePhotoCapture: true
+    remotePhotoCapture: true,
+    repairTracking: true
   },
 
   storage: {
@@ -28,7 +29,8 @@ const CONFIG = {
       stamps: 'stamps',
       documents: 'generated-documents',
       avatars: 'avatars',
-      incomePhotos: 'income-entry-photos'
+      incomePhotos: 'income-entry-photos',
+      repairProgress: 'repair-progress'
     }
   },
 

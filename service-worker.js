@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fixora-v23';
+const CACHE_NAME = 'fixora-v26';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   './tecnico.html',
   './firma.html',
   './fotos.html',
+  './seguimiento.html',
   './detalle.html',
   './configuracion.html',
   './404.html',
@@ -27,6 +28,7 @@ const STATIC_ASSETS = [
   './css/technicians.css',
   './css/signature-public.css',
   './css/photo-capture.css',
+  './css/tracking-public.css',
   './js/app-config.js',
   './js/config.js',
   './js/supabase.js',
@@ -47,6 +49,8 @@ const STATIC_ASSETS = [
   './js/signature-public.js',
   './js/photo-capture-admin.js',
   './js/photo-capture-public.js',
+  './js/repair-status-service.js',
+  './js/tracking-public.js',
   './js/search.js',
   './js/pdf.js',
   './js/quote.js',
@@ -79,7 +83,7 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(request.url);
   if (requestUrl.origin !== self.location.origin) return;
   // Never persist capability tokens contained in public capture/signature URLs.
-  if (requestUrl.searchParams.has('token') && (requestUrl.pathname.endsWith('/fotos.html') || requestUrl.pathname.endsWith('/firma.html'))) {
+  if (requestUrl.searchParams.has('token') && (requestUrl.pathname.endsWith('/fotos.html') || requestUrl.pathname.endsWith('/firma.html') || requestUrl.pathname.endsWith('/seguimiento.html'))) {
     event.respondWith(fetch(request).catch(() => caches.match(new URL(requestUrl.pathname, requestUrl.origin), { ignoreSearch: true })));
     return;
   }
@@ -97,6 +101,9 @@ self.addEventListener('fetch', (event) => {
         if (request.mode === 'navigate') {
           if (requestUrl.pathname.endsWith('/firma.html')) {
             return caches.match(new URL('./firma.html', self.registration.scope), { ignoreSearch: true });
+          }
+          if (requestUrl.pathname.endsWith('/seguimiento.html')) {
+            return caches.match(new URL('./seguimiento.html', self.registration.scope), { ignoreSearch: true });
           }
           if (requestUrl.pathname.endsWith('/fotos.html')) {
             return caches.match(new URL('./fotos.html', self.registration.scope), { ignoreSearch: true });
